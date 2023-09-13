@@ -1,17 +1,14 @@
 version: '3'
 services:
-    laravel-app:
+    app:
+        env_file:
+            - .env
         build:
             context: .
-            dockerfile: Dockerfile
-        image: laravel-app
-        container_name: laravel-app
-        ports:
-            - "${APP_PORT}:${APP_PORT_DOCKER}"
+            dockerfile: ./Dockerfile
+        container_name: app
         volumes:
-            - .:/var/www/html
-        depends_on:
-            - mysql-db
+            - ./:/var/www/html
         networks:
             - laravel-network
 
@@ -24,12 +21,23 @@ services:
             MYSQL_USER: ${DB_USERNAME}
             MYSQL_PASSWORD: ${DB_PASSWORD}
         ports:
-            - "${DB_PORT}:${$DB_PORT}"
+            - "${DB_PORT}:${DB_PORT}"
         volumes:
             - mysql-data:/var/lib/mysql
         networks:
             - laravel-network
 
+    nginx:
+        image: nginx:stable-alpine
+        user: root
+        container_name: nginx
+        ports:
+            - "${NGINX_PORT:-8080}:${NGINX_DOCKER_PORT:-443}"
+        volumes:
+            - ./:/var/www/html
+            - ${NGINX_CONFIG_LOCAL_PATH}:${NGINX_CONFIG_DOCKER_PATH}
+        networks:
+            - laravel-network
 networks:
     laravel-network:
         driver: bridge
